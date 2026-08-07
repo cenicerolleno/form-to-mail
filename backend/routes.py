@@ -1,11 +1,15 @@
 from flask import jsonify, Blueprint, request
 from services.validation import validate_contact_data
-from services.antispam import is_bot
+from services.antispam import is_bot, is_rate_limited
 
 contact_bp = Blueprint('contact', __name__)
 
+
 @contact_bp.route('/contact', methods=['POST'])
 def contact():
+    ip = request.remote_addr
+    if is_rate_limited(ip):
+        return jsonify({"error": "Too many requests"}), 429
     data = request.get_json(silent=True)
     if data is None:
         return (jsonify({"error": "No body in request"}), 400)
