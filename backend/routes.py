@@ -1,6 +1,8 @@
 from flask import jsonify, Blueprint, request
 from services.validation import validate_contact_data
 from services.antispam import is_bot, is_rate_limited
+from services.mailer import send_email
+from config import Config
 
 contact_bp = Blueprint('contact', __name__)
 
@@ -18,5 +20,12 @@ def contact():
     errors = validate_contact_data(data)
     if errors:
         return (jsonify({"errors": errors}), 400)
+    
+    result = send_email(data, Config)
+    if not result["success"]:
+        print(result["error"])
+        return (jsonify({"message": "The message could not be sent, please try again in a few minutes.!"}), 502)
+    
+    
 
     return (jsonify({"message": "Contact form submitted !"}), 200)
