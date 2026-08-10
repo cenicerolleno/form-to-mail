@@ -24,7 +24,7 @@ def contact():
     result = send_email(data, Config)
     if not result["success"]:
         print(result["error"])
-        return (jsonify({"message": "The message could not be sent, please try again in a few minutes.!"}), 502)
+        return (jsonify({"message": "The message could not be sent, please try again in a few minutes!"}), 502)
     
     
 

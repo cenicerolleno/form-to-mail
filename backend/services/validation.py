@@ -15,6 +15,9 @@ def validate_contact_data(data):
             '@' not in email_cleaned
             or email_cleaned.startswith('@')
             or email_cleaned.endswith('@')
+            or '.' not in email_cleaned
+            or email_cleaned.startswith('.')
+            or email_cleaned.endswith('.')
         )
         if email_invalid:
             errors['email'] = 'El formato del correo no es válido.'

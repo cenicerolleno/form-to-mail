@@ -1,4 +1,5 @@
-import requests, textwrap
+import textwrap
+import requests
 
 BREVO_URL = "https://api.brevo.com/v3/smtp/email"
 TIMEOUT_SECONDS = 10
@@ -8,6 +9,7 @@ def send_email(data, config):
 
     text_content = textwrap.dedent(
         f"""
+        Nuevo contacto desde el formulario web:
         Nombre: {data.get('name')}
         Email: {data.get('email')}
         Telefono: {data.get('phone') or 'No proporcionado'}
