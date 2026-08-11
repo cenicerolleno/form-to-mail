@@ -10,7 +10,7 @@
       integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB"
       crossorigin="anonymous"
     />
-    <link rel="stylesheet"  href="css/styles.css" />
+    <link rel="stylesheet" href="css/styles.css" />
   </head>
   <body>
     <div class="container mt-3 border rounded">
@@ -19,7 +19,7 @@
           <h2>Contacte con nosotros</h2>
         </div>
       </div>
-      <form id="contactForm">
+      <form id="contactForm" novalidate>
         <div class="mb-3 mt-3">
           <label for="name" class="form-label">Contacto</label>
           <input
@@ -30,6 +30,7 @@
             placeholder="Nombre y apellidos"
             required
           />
+          <div class="invalid-feedback" id="error-name"></div>
         </div>
 
         <div class="mb-3">
@@ -42,6 +43,7 @@
             placeholder="nombre@ejemplo.com"
             required
           />
+          <div class="invalid-feedback" id="error-email"></div>
         </div>
         <div class="mb-3">
           <label for="phone" class="form-label">Teléfono</label>
@@ -53,6 +55,7 @@
             name="phone"
             placeholder="+34 123 456 789"
           />
+          <div class="invalid-feedback" id="error-phone"></div>
         </div>
         <div class="mb-3">
           <label for="message" class="form-label">Mensaje</label>
@@ -60,12 +63,12 @@
             class="form-control"
             id="message"
             name="message"
-
             rows="3"
             placeholder="Escribe tu mensaje aquí"
             maxlength="500"
             required
           ></textarea>
+          <div class="invalid-feedback" id="error-message"></div>
           <div class="form-text d-flex justify-content-end">
             <span class="text-secondary" id="counter">0/500</span>
           </div>
@@ -81,17 +84,19 @@
           <label class="form-check-label" for="consent">
             Acepto los términos y condiciones.
           </label>
+          <div class="invalid-feedback" id="error-consent"></div>
         </div>
-            <!-- Honeypot field for spam prevention -->
-    <div class="hp-field">
-      <input
-        type="text"
-        id="website"
-        name="website"
-        tabindex="-1"
-        autocomplete="off"
-      />
-    </div>
+        <!-- Honeypot field for spam prevention -->
+        <div class="hp-field">
+          <input
+            type="text"
+            id="website"
+            name="website"
+            tabindex="-1"
+            autocomplete="off"
+          />
+        </div>
+        <div id="form-message"></div>
 
         <div class="row bg-light border-top">
           <div class="col-12 d-flex justify-content-end p-3">
