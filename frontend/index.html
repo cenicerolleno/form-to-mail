@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Contact us</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB"
+      crossorigin="anonymous"
+    />
+    <link rel="stylesheet"  href="css/styles.css" />
+  </head>
+  <body>
+    <div class="container mt-3 border rounded">
+      <div class="row bg-light border-bottom p-3">
+        <div class="col-12">
+          <h2>Contacte con nosotros</h2>
+        </div>
+      </div>
+      <form id="contactForm">
+        <div class="mb-3 mt-3">
+          <label for="name" class="form-label">Contacto</label>
+          <input
+            type="text"
+            class="form-control"
+            id="name"
+            name="name"
+            placeholder="Nombre y apellidos"
+            required
+          />
+        </div>
+
+        <div class="mb-3">
+          <label for="email" class="form-label">Email</label>
+          <input
+            type="email"
+            class="form-control"
+            id="email"
+            name="email"
+            placeholder="nombre@ejemplo.com"
+            required
+          />
+        </div>
+        <div class="mb-3">
+          <label for="phone" class="form-label">Teléfono</label>
+
+          <input
+            type="tel"
+            class="form-control"
+            id="phone"
+            name="phone"
+            placeholder="+34 123 456 789"
+          />
+        </div>
+        <div class="mb-3">
+          <label for="message" class="form-label">Mensaje</label>
+          <textarea
+            class="form-control"
+            id="message"
+            name="message"
+
+            rows="3"
+            placeholder="Escribe tu mensaje aquí"
+            maxlength="500"
+            required
+          ></textarea>
+          <div class="form-text d-flex justify-content-end">
+            <span class="text-secondary" id="counter">0/500</span>
+          </div>
+        </div>
+        <div class="mb-3 form-check">
+          <input
+            type="checkbox"
+            class="form-check-input"
+            id="consent"
+            name="consent"
+            required
+          />
+          <label class="form-check-label" for="consent">
+            Acepto los términos y condiciones.
+          </label>
+        </div>
+            <!-- Honeypot field for spam prevention -->
+    <div class="hp-field">
+      <input
+        type="text"
+        id="website"
+        name="website"
+        tabindex="-1"
+        autocomplete="off"
+      />
+    </div>
+
+        <div class="row bg-light border-top">
+          <div class="col-12 d-flex justify-content-end p-3">
+            <button class="btn btn-secondary" type="reset">Cancelar</button>
+            <button class="btn btn-primary ms-1" type="submit">Enviar</button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <script type="module" src="js/main.js"></script>
+  </body>
+</html>
