@@ -1,18 +1,16 @@
 # form-to-mail
 
-Backend mínimo para formularios de contacto: recibe una petición POST, valida los datos, aplica barreras antispam y envía el contenido por correo electrónico mediante una API transaccional.
+Backend y frontend mínimos para formularios de contacto: recibe una petición POST, valida los datos, aplica barreras antispam y envía el contenido por correo electrónico mediante una API transaccional.
 
-Pensado para desplegarse de forma independiente y ser consumido por cualquier frontend (HTML plano, Bootstrap, React…) desde otro origen.
-
-> ⚠️ **Estado:** en desarrollo. Las tres barreras antispam y la validación están operativas; **el envío de correo todavía no está implementado** (el endpoint devuelve `200` sin enviar nada).
+Diseñado para desplegarse de forma independiente y ser consumido por cualquier frontend (HTML plano, Bootstrap, React…) desde otro origen.
 
 ---
 
 ## Stack
 
-- **Backend:** Python 3.13 · Flask · Flask-CORS
-- **Frontend:** HTML + Bootstrap + JavaScript vanilla (ES Modules)
-- **Email:** API transaccional *(pendiente de integrar)*
+- **Backend:** Python 3.13 · Flask · Flask-CORS · requests
+- **Frontend:** HTML + Bootstrap 5 (CDN) + JavaScript vanilla (ES Modules)
+- **Email:** API transaccional de [Brevo](https://www.brevo.com/)
 - **Pruebas de API:** [Bruno](https://www.usebruno.com/)
 
 ---
@@ -23,25 +21,36 @@ Pensado para desplegarse de forma independiente y ser consumido por cualquier fr
 form-to-mail/
 ├── backend/
 │   ├── app.py              # Application Factory
-│   ├── config.py           # configuración por entornos
-│   ├── routes.py           # endpoints (capa HTTP)
+│   ├── config.py           # configuración desde variables de entorno
+│   ├── routes.py           # capa HTTP
 │   ├── services/           # lógica de negocio, sin dependencias de Flask
 │   │   ├── validation.py   # validación de campos y consentimiento
 │   │   ├── antispam.py     # honeypot y rate limiting
-│   │   └── mailer.py       # envío de correo (pendiente)
+│   │   └── mailer.py       # envío vía API transaccional
 │   └── requirements.txt
 └── frontend/
+    ├── index.html
+    ├── css/styles.css
+    └── js/
+        ├── main.js         # orquesta: listener del submit
+        ├── api.js          # comunicación con el backend
+        ├── validation.js   # validación en cliente
+        └── ui.js           # manipulación del DOM
 ```
 
-**Principio de diseño:** `services/` no importa nada de Flask. Recibe y devuelve estructuras de datos de Python, lo que permite testear la lógica sin levantar el servidor y migrar a otra plataforma reescribiendo solo `routes.py`.
+### Principios de diseño
 
-`services/` responde preguntas; `routes.py` traduce esas respuestas a códigos HTTP.
+**`services/` no importa nada de Flask.** Recibe y devuelve estructuras de datos de Python, lo que permite testear la lógica sin levantar el servidor y migrar a otra plataforma reescribiendo solo `routes.py`.
+
+**`services/` responde preguntas; `routes.py` traduce esas respuestas a códigos HTTP.** Un validador devuelve *"falta el email"*, no un `400`.
+
+El frontend replica el mismo reparto: `api.js` y `validation.js` no tocan el DOM, `ui.js` no sabe que existe el backend, y `main.js` orquesta.
 
 ---
 
-## Instalación y arranque
+## Instalación
 
-Todos los comandos se ejecutan desde el directorio `backend/`.
+Todos los comandos del backend se ejecutan desde el directorio `backend/`.
 
 ```bash
 cd backend
@@ -51,35 +60,47 @@ source venv/Scripts/activate    # Windows (Git Bash)
 pip install -r requirements.txt
 ```
 
-### Levantar el servidor
+### Variables de entorno
+
+Crear un fichero `.env` dentro de `backend/` (no se versiona):
+
+```
+BREVO_API_KEY=tu_clave_de_api
+MAIL_FROM=remitente@verificado.com
+MAIL_TO=destinatario@ejemplo.com
+ALLOWED_ORIGINS=http://127.0.0.1:5500,http://localhost:5500
+```
+
+| Variable | Descripción |
+|---|---|
+| `BREVO_API_KEY` | Clave de API de Brevo (*SMTP & API → API Keys*) |
+| `MAIL_FROM` | Remitente verificado en Brevo. **No** es el email del visitante |
+| `MAIL_TO` | Buzón que recibirá los mensajes del formulario |
+| `ALLOWED_ORIGINS` | Orígenes autorizados, separados por comas y **sin espacios** |
+
+> **Sobre `ALLOWED_ORIGINS`:** el origen debe coincidir exactamente, protocolo y puerto incluidos. `http://localhost:5500` y `http://127.0.0.1:5500` son orígenes distintos para el navegador.
+
+### Arranque
+
+**Backend** (con el entorno virtual activado):
 
 ```bash
 flask --app app:create_app run --debug --port 5001
 ```
 
-Requiere tener el entorno virtual activado (ver paso anterior). Disponible en `http://localhost:5001`.
+Disponible en `http://localhost:5001`. Se usa el puerto 5001 porque en macOS el 5000 suele estar ocupado por AirPlay.
 
-> **Nota:** se usa el puerto 5001 porque en macOS el 5000 suele estar ocupado por AirPlay.
+**Frontend:** servir `frontend/` por HTTP (por ejemplo, con la extensión *Live Server* de VSCode).
 
----
-
-## Variables de entorno
-
-Crear un fichero `.env` dentro de `backend/` (no se versiona):
-
-```
-# pendiente de definir al integrar el envío de correo
-```
+> Los módulos ES **no funcionan abriendo `index.html` con doble clic** (protocolo `file://`): el navegador bloquea la carga.
 
 ---
 
-## Endpoints
+## API
 
 ### `POST /contact`
 
 Recibe los datos del formulario en formato JSON.
-
-**Body:**
 
 | Campo | Tipo | Obligatorio | Límite |
 |---|---|---|---|
@@ -88,71 +109,75 @@ Recibe los datos del formulario en formato JSON.
 | `phone` | string | ❌ | 20 |
 | `message` | string | ✅ | 500 |
 | `consent` | boolean | ✅ | debe ser `true` |
-| `website` | string | — | **campo trampa (honeypot)** |
-
-> ⚠️ **`website` es el honeypot.** En el frontend debe existir como input **oculto por CSS** y vacío. El backend descarta silenciosamente cualquier petición que lo traiga relleno. **El `name` del input y la clave que comprueba `antispam.py` deben coincidir exactamente**: si no, la trampa deja de funcionar sin dar ningún error.
 
 **Respuestas:**
 
 | Código | Significado |
 |---|---|
-| `200` | Recibido correctamente *(también se devuelve al detectar el honeypot, de forma deliberada)* |
+| `200` | Mensaje enviado correctamente |
 | `400` | Body ausente o inválido, o errores de validación (se devuelve el detalle por campo) |
 | `429` | Límite de peticiones superado |
+| `502` | Fallo del proveedor de email |
 
-**Orden de las barreras** (criterio *fail-fast*, de más barata a más cara):
+Los errores de validación se devuelven agrupados, no de uno en uno:
 
-1. Rate limiting → `429`
-2. Body ausente o malformado → `400`
-3. Honeypot → `200` (éxito falso, deliberado)
-4. Validación de campos y consentimiento → `400`
-5. Envío de correo → `200` / `502` *(pendiente)*
+```json
+{
+  "errors": {
+    "email": "El formato del correo no es válido.",
+    "consent": "El consentimiento es obligatorio."
+  }
+}
+```
 
-**Política de rate limiting actual:** 5 peticiones por IP cada 60 segundos. Configurable en las constantes `MAX_ATTEMPTS` y `WINDOW_SECONDS` de `services/antispam.py`.
-
----
-
-## Deuda técnica
-
-> Limitaciones conocidas y asumidas conscientemente en la versión de laboratorio. **Deben revisarse antes de desplegar en cualquier proyecto real.**
-
-### 🔴 Prioritarias antes de producción
-
-**1. Fuga de memoria en el rate limiter.**
-El diccionario `_attempts` de `services/antispam.py` acumula una entrada por cada IP que haya contactado alguna vez y **nunca las elimina**. Las listas de timestamps se filtran, pero las claves permanecen indefinidamente. En un despliegue de larga duración el consumo de memoria crece sin techo.
-
-*Opciones de solución:*
-- Purgar las IPs sin intentos vigentes en cada llamada (rápido de implementar, coste creciente con el número de claves).
-- Purga periódica cada N peticiones (mejor equilibrio, sigue siendo casero).
-- **Migrar el contador a Redis**, que expira las claves automáticamente. Es la solución estándar de la industria y elimina de paso los puntos 2 y 3.
-
-**2. El estado en memoria no sobrevive a un reinicio ni a múltiples procesos.**
-El contador se pierde al reiniciar el servidor y no se comparte entre workers. Con varios procesos, el límite efectivo se multiplica por el número de workers.
-
-**3. ⚠️ El rate limiting NO funciona detrás de un proxy o CDN.**
-`request.remote_addr` devuelve la IP del proxy, no la del visitante: **todos los usuarios compartirían un único contador y se bloquearían entre sí**. Debe leerse la cabecera `X-Forwarded-For` — pero solo confiando en el proxy concreto del despliegue, ya que un cliente puede falsificarla para saltarse el límite. Es configuración específica de la plataforma de despliegue.
-
-### 🟡 Incompatibilidad con serverless
-
-Si el destino final fuera una plataforma serverless (Vercel, Netlify, Cloudflare Workers), **el rate limiting dejaría de funcionar por completo**: cada invocación puede ejecutarse en un contenedor nuevo sin memoria compartida. En ese escenario el contador debe vivir fuera del proceso (Redis, KV store) de forma obligatoria, no opcional.
-
-### 🟢 Mejoras opcionales
-
-- **Validación de email:** la comprobación actual es provisional (presencia de `@` y posición). Sustituir por una librería especializada.
-- **Persistencia de envíos fallidos:** descartada conscientemente (ver `BITACORA.md`). Si el proyecto pasara a mantenerse activamente, replantear.
-- **Email de confirmación al usuario:** descartado por riesgo de *backscatter*. Solo considerar con la capa antispam consolidada.
+**Política de rate limiting:** 5 peticiones por IP cada 60 segundos. Configurable en `services/antispam.py`.
 
 ---
 
-## Pruebas de API
+## Integración con otro frontend
 
-La colección de Bruno está versionada en el repositorio. Abrir Bruno, importar la colección y configurar la URL base como `http://localhost:5001`.
+El backend es agnóstico del cliente. Para consumirlo desde otro proyecto:
 
-**Casos de prueba relevantes:**
-- Body válido → `200`
-- Body con JSON malformado → `400`
-- Honeypot relleno **junto a campos inválidos** → debe devolver `200`, no `400` (verifica que el orden de barreras es correcto)
-- 6 peticiones seguidas → la sexta debe devolver `429`
+1. Añadir el origen del nuevo frontend a `ALLOWED_ORIGINS`.
+2. Enviar un `POST` a `/contact` con `Content-Type: application/json` y los campos de la tabla anterior.
+3. **Incluir el campo trampa antispam.** El formulario debe contener un input adicional oculto por CSS y vacío; el backend descarta silenciosamente cualquier petición que lo traiga relleno. El nombre exacto del campo está en `services/antispam.py` y debe coincidir **exactamente** con el atributo `name` del input: si no coinciden, la protección deja de funcionar sin dar ningún error.
+
+`frontend/js/api.js` es reutilizable tal cual: no depende del DOM ni del resto de ficheros.
+
+---
+
+## Notas de despliegue
+
+> ⚠️ Este repositorio está en fase de laboratorio. Antes de desplegarlo en un proyecto real hay que revisar los siguientes puntos.
+
+**Autenticación del dominio en el proveedor de email.** Sin registros DKIM y SPF configurados, los correos se envían desde un dominio genérico del proveedor y tienen alta probabilidad de acabar en spam. **Es un requisito de entrega, no una mejora opcional.**
+
+**Rate limiting.** La implementación actual guarda el estado en memoria del proceso. Esto implica que no sobrevive a reinicios, no se comparte entre workers y **no es compatible con plataformas serverless**. Para cualquier despliegue con varios procesos o de larga duración, el contador debe migrarse a un almacén externo (Redis o similar).
+
+**Detección de IP.** El rate limiting usa la IP de la conexión directa. Detrás de un proxy o CDN debe configurarse la lectura de la cabecera correspondiente, confiando únicamente en el proxy del despliegue concreto.
+
+**CORS.** `ALLOWED_ORIGINS` debe restringirse al dominio del proyecto. Conviene recordar que CORS solo lo aplican los navegadores: no protege el endpoint frente a peticiones directas. La protección real la aportan el rate limiting, el filtro antispam y la validación en servidor.
+
+**Validación de email.** La comprobación del backend es provisional. Sustituir por una librería especializada.
+
+**Titularidad de las cuentas.** En un modelo de entrega sin mantenimiento, la cuenta del proveedor de email y el dominio verificado deben estar a nombre del cliente.
+
+---
+
+## Pruebas
+
+La colección de Bruno está versionada en el repositorio. Configurar la URL base como `http://localhost:5001`.
+
+**Casos relevantes:**
+
+| Caso | Esperado |
+|---|---|
+| Body válido | `200` + correo recibido |
+| JSON malformado o ausente | `400` |
+| Campos inválidos | `400` con detalle por campo |
+| Campo trampa relleno **junto a campos inválidos** | `200` (verifica el orden de las barreras) |
+| 6 peticiones seguidas | La sexta devuelve `429` |
+| `Origin` no autorizado | Respuesta sin cabecera `Access-Control-Allow-Origin` |
 
 ---
 
