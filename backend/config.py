@@ -8,3 +8,4 @@ class Config:
     BREVO_API_KEY = os.getenv("BREVO_API_KEY")
     MAIL_FROM = os.getenv("MAIL_FROM")
     MAIL_TO = os.getenv("MAIL_TO")
+    ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "").split(",")
