@@ -30,9 +30,8 @@ form.addEventListener("submit", async (e) => {
   // 4. actuar según el resultado
   if (result.ok) {
     // éxito
-    showMessage("Formulario enviado con éxito.", 'success');
     form.reset()
-    updateCounter(0, MAX_MESSAGE_LENGTH)
+    showMessage("Formulario enviado con éxito.", 'success');    
   } else if (result.status === 400) {
     // errores del servidor
     showErrors(result.errors);
@@ -49,4 +48,10 @@ const message = form.elements.message;
 updateCounter(message.value.length, MAX_MESSAGE_LENGTH);
 message.addEventListener('input', () => {
     updateCounter(message.value.length, MAX_MESSAGE_LENGTH);
+});
+
+form.addEventListener('reset', () => {
+    clearErrors();
+    clearMessage();
+    updateCounter(0, MAX_MESSAGE_LENGTH);
 });
