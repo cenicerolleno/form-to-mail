@@ -1,3 +1,6 @@
+const WARNING_THRESHOLD = 0.9;
+
+
 export function showErrors(errors) {
     for (const campo in errors) {
     document.getElementById("error-" + campo).textContent = errors[campo];
@@ -29,5 +32,11 @@ export function clearMessage() {
 }
 export function updateCounter(current, max) {
     const counter = document.getElementById('counter');
-    counter.textContent = `${current}/${max}`;  
+    const warning = current > max * WARNING_THRESHOLD && current < max;
+    const danger = current >= max;
+    const normal = current <= max * WARNING_THRESHOLD;
+    counter.textContent = `${current}/${max}`;
+    counter.classList.toggle('text-warning', warning);
+    counter.classList.toggle('text-danger', danger);
+    counter.classList.toggle('text-secondary', normal);
 }

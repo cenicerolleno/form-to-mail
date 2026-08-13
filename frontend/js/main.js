@@ -1,7 +1,8 @@
 import { sendContactForm } from "./api.js";
 import { validateContactData } from "./validation.js";
-import { showErrors, clearErrors, showMessage, clearMessage } from "./ui.js";
+import { showErrors, clearErrors, showMessage, clearMessage, updateCounter } from "./ui.js";
 
+const MAX_MESSAGE_LENGTH = 500
 const form = document.getElementById("contactForm");
 
 form.addEventListener("submit", async (e) => {
@@ -31,6 +32,7 @@ form.addEventListener("submit", async (e) => {
     // éxito
     showMessage("Formulario enviado con éxito.", 'success');
     form.reset()
+    updateCounter(0, MAX_MESSAGE_LENGTH)
   } else if (result.status === 400) {
     // errores del servidor
     showErrors(result.errors);
@@ -41,4 +43,10 @@ form.addEventListener("submit", async (e) => {
     // fallo general
     showMessage("Error al enviar el formulario.", 'danger')
   }
+});
+
+const message = form.elements.message;
+updateCounter(message.value.length, MAX_MESSAGE_LENGTH);
+message.addEventListener('input', () => {
+    updateCounter(message.value.length, MAX_MESSAGE_LENGTH);
 });
