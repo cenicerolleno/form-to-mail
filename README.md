@@ -225,7 +225,6 @@ El backend es agnóstico del cliente. Para consumirlo desde otro proyecto:
 
 **CORS.** `ALLOWED_ORIGINS` debe restringirse al dominio del proyecto. Conviene recordar que CORS solo lo aplican los navegadores: no protege el endpoint frente a peticiones directas. La protección real la aportan el rate limiting, el filtro antispam y la validación en servidor.
 
-**Validación de email.** La comprobación del backend es provisional. Sustituir por una librería especializada.
 
 **Titularidad de las cuentas.** En un modelo de entrega sin mantenimiento, la cuenta del proveedor de email y el dominio verificado deben estar a nombre del cliente.
 
