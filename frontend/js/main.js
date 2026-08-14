@@ -17,7 +17,7 @@ form.addEventListener("submit", async (e) => {
     phone: form.elements.phone.value,
     message: form.elements.message.value,
     consent: form.elements.consent.checked,
-    website: form.elements.website.value, // Honeypot field
+    website: form.elements.website.value, 
   };
   // 2. validar en cliente → si hay errores, pintarlos y salir
   const errors = validateContactData(formData);
