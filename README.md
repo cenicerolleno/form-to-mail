@@ -96,6 +96,73 @@ Disponible en `http://localhost:5001`. Se usa el puerto 5001 porque en macOS el 
 
 ---
 
+## Levantar el proyecto en GitHub Codespaces
+
+Un Codespace es un contenedor Linux remoto: el código se ejecuta allí, pero **el navegador sigue siendo el de tu máquina**. Eso cambia cuatro cosas respecto al arranque en local.
+
+### 1. Recrear lo que no viaja por Git
+
+`venv/` y `.env` están en `.gitignore`, así que **no existen en el Codespace**. Hay que crearlos de nuevo:
+
+```bash
+cd backend
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
+Y recrear el `.env` con las cuatro variables (ver sección anterior). Las claves no están en el repositorio: hay que copiarlas a mano.
+
+### 2. Arrancar el backend escuchando en todas las interfaces
+
+```bash
+flask --app app:create_app run --debug --port 5001 --host 0.0.0.0
+```
+
+El `--host 0.0.0.0` es necesario para que el reenvío de puertos del Codespace alcance al servidor. Sin él, Flask solo escucha en la interfaz interna del contenedor.
+
+### 3. Hacer público el puerto del backend
+
+Al arrancar, el Codespace reenvía el puerto y genera una URL con el formato <cite index="25-1">`https://NOMBRE-DEL-CODESPACE-PUERTO.app.github.dev`</cite>.
+
+<cite index="25-1">Los puertos reenviados son privados por defecto: solo visibles para ti</cite>. Y "para ti" significa *para tu sesión autenticada de GitHub*, no para una petición `fetch` lanzada desde otra página — que llegará sin credenciales y recibirá una pantalla de login en lugar de tu API.
+
+Por eso hay que **cambiar la visibilidad del puerto 5001 a pública**: pestaña **PORTS** → clic derecho sobre el puerto → *Port Visibility* → *Public*. También desde la terminal:
+
+```bash
+gh codespace ports visibility 5001:public
+```
+
+> ⚠️ **Un puerto público es accesible por cualquiera que conozca la URL.** Con las credenciales de Brevo cargadas, eso significa que un tercero podría consumir tu cuota de envíos. Detén el Codespace al terminar y no compartas esas URLs.
+
+### 4. Ajustar las dos URLs que apuntan a `localhost`
+
+Este es el punto que más confunde, porque el código funciona en local y falla en Codespaces sin dar un error claro.
+
+**En `frontend/js/api.js`**, la constante `API_URL` apunta a `http://localhost:5001/contact`. Desde el navegador de tu máquina, ese `localhost` es *tu propio ordenador*, no el contenedor. Hay que sustituirla por la URL reenviada del puerto 5001.
+
+**En el `.env`**, `ALLOWED_ORIGINS` debe contener la URL reenviada del **frontend** (puerto 5500), no la de local:
+
+```
+ALLOWED_ORIGINS=https://NOMBRE-DEL-CODESPACE-5500.app.github.dev
+```
+
+Fíjate en que ahora es `https`, no `http`. Un origen con protocolo distinto es un origen distinto, y CORS lo rechazará.
+
+> <cite index="32-1">El dominio que GitHub usa para el reenvío de puertos puede cambiar con el tiempo, así que conviene no fijar estas URLs en el código de forma permanente</cite>. Son ajustes de sesión: revertirlos antes de commitear.
+
+### Resumen de diferencias
+
+| | Local | Codespaces |
+|---|---|---|
+| `venv` y `.env` | Ya existen | Hay que recrearlos |
+| Arranque de Flask | `--port 5001` | `--port 5001 --host 0.0.0.0` |
+| Visibilidad del puerto 5001 | N/A | Debe ser **pública** |
+| `API_URL` en `api.js` | `http://localhost:5001/contact` | URL reenviada del puerto 5001 |
+| `ALLOWED_ORIGINS` | `http://127.0.0.1:5500` | URL reenviada del puerto 5500 (`https`) |
+
+---
+
 ## API
 
 ### `POST /contact`
