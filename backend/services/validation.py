@@ -1,3 +1,5 @@
+from email_validator import validate_email, EmailNotValidError
+
 def validate_contact_data(data):
     errors = {}
     name = data.get('name')
@@ -11,15 +13,9 @@ def validate_contact_data(data):
         errors['email'] = 'El email es obligatorio.'
     else:
         email_cleaned = email.strip()
-        email_invalid = (
-            '@' not in email_cleaned
-            or email_cleaned.startswith('@')
-            or email_cleaned.endswith('@')
-            or '.' not in email_cleaned
-            or email_cleaned.startswith('.')
-            or email_cleaned.endswith('.')
-        )
-        if email_invalid:
+        try:
+            validate_email(email_cleaned, check_deliverability=False)
+        except EmailNotValidError:
             errors['email'] = 'El formato del correo no es válido.'
     
     phone = data.get('phone')
