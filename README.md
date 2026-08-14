@@ -32,10 +32,11 @@ form-to-mail/
     ├── index.html
     ├── css/styles.css
     └── js/
-        ├── main.js         # orquesta: listener del submit
-        ├── api.js          # comunicación con el backend
-        ├── validation.js   # validación en cliente
-        └── ui.js           # manipulación del DOM
+        ├── main.js             # orquesta: listener del submit
+        ├── api.js              # comunicación con el backend
+        ├── validation.js       # validación en cliente
+        ├── ui.js               # manipulación del DOM
+        └── config.example.js   # plantilla de configuración
 ```
 
 ### Principios de diseño
@@ -80,6 +81,18 @@ ALLOWED_ORIGINS=http://127.0.0.1:5500,http://localhost:5500
 
 > **Sobre `ALLOWED_ORIGINS`:** el origen debe coincidir exactamente, protocolo y puerto incluidos. `http://localhost:5500` y `http://127.0.0.1:5500` son orígenes distintos para el navegador.
 
+### Configuración del frontend
+
+La URL del backend vive en `frontend/js/config.js`, que **está ignorado por Git**: cada máquina tiene el suyo. Hay que crearlo a partir de la plantilla versionada:
+
+```bash
+cp frontend/js/config.example.js frontend/js/config.js
+```
+
+Y ajustar `API_URL` al entorno correspondiente.
+
+> ⚠️ **Este paso no es opcional.** Sin `config.js`, el import de `api.js` falla y **`main.js` no llega a ejecutarse**: el formulario recarga la página al enviar en lugar de dar un error visible.
+
 ### Arranque
 
 **Backend** (con el entorno virtual activado):
@@ -90,9 +103,18 @@ flask --app app:create_app run --debug --port 5001
 
 Disponible en `http://localhost:5001`. Se usa el puerto 5001 porque en macOS el 5000 suele estar ocupado por AirPlay.
 
-**Frontend:** servir `frontend/` por HTTP (por ejemplo, con la extensión *Live Server* de VSCode).
+**Frontend:** servir `frontend/` por HTTP. Dos opciones:
+
+```bash
+cd frontend
+python -m http.server 5500
+```
+
+O la extensión *Live Server* de VSCode. El repositorio incluye un `.vscode/settings.json` que fija su raíz en `/frontend` y el puerto en 5500.
 
 > Los módulos ES **no funcionan abriendo `index.html` con doble clic** (protocolo `file://`): el navegador bloquea la carga.
+
+> ⚠️ **El puerto importa.** `ALLOWED_ORIGINS` autoriza orígenes exactos: si el servidor de estáticos arranca en 5501 en lugar de 5500, CORS rechazará las peticiones. Live Server salta al siguiente puerto libre si el suyo está ocupado, así que conviene verificar la URL real en la barra de direcciones ante cualquier error de CORS inesperado.
 
 ---
 
@@ -135,19 +157,41 @@ gh codespace ports visibility 5001:public
 
 > ⚠️ **Un puerto público es accesible por cualquiera que conozca la URL.** Con las credenciales de Brevo cargadas, eso significa que un tercero podría consumir tu cuota de envíos. Detén el Codespace al terminar y no compartas esas URLs.
 
-### 4. Ajustar las dos URLs que apuntan a `localhost`
+### 4. Levantar el frontend
+
+Desde el directorio `frontend/`:
+
+```bash
+cd frontend
+python -m http.server 5500
+```
+
+**Es la forma recomendada en Codespaces.** No requiere extensiones, siempre sirve desde el directorio en el que se lanza, y el puerto es explícito y predecible — a diferencia de Live Server, que puede arrancar en otro puerto y romper la coincidencia con `ALLOWED_ORIGINS`.
+
+Codespaces detectará el puerto 5500 y lo reenviará automáticamente.
+
+### 5. Ajustar las dos URLs que apuntan a `localhost`
 
 Este es el punto que más confunde, porque el código funciona en local y falla en Codespaces sin dar un error claro.
 
-**En `frontend/index.html`**, el atributo `data-api-url` de la etiqueta `<body>` apunta a `http://localhost:5001/contact`. Desde el navegador de tu máquina, ese `localhost` es *tu propio ordenador*, no el contenedor. Hay que sustituirlo por la URL reenviada del puerto 5001.
+**No hace falta copiar las URLs a mano.** El Codespace las expone en variables de entorno; estos dos comandos las construyen:
 
-**En el `.env`**, `ALLOWED_ORIGINS` debe contener la URL reenviada del **frontend** (puerto 5500), no la de local:
-
+```bash
+echo "https://$CODESPACE_NAME-5001.$GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN/contact"
+echo "https://$CODESPACE_NAME-5500.$GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN"
 ```
-ALLOWED_ORIGINS=https://NOMBRE-DEL-CODESPACE-5500.app.github.dev
-```
 
-Fíjate en que ahora es `https`, no `http`. Un origen con protocolo distinto es un origen distinto, y CORS lo rechazará.
+**La primera va a `API_URL`** en `frontend/js/config.js`. Desde el navegador de tu máquina, `localhost` es *tu propio ordenador*, no el contenedor.
+
+**La segunda va a `ALLOWED_ORIGINS`** en el `.env`, y después hay que **reiniciar Flask**: el `.env` solo se lee al arrancar.
+
+> ⚠️ **`API_URL` lleva la ruta `/contact`; `ALLOWED_ORIGINS` NO.** Un origen es solo protocolo + host + puerto: sin ruta y sin barra final. Es el error más común al copiar de una a otra.
+
+Fíjate en que ambas son `https`. Un origen con protocolo distinto es un origen distinto, y CORS lo rechazará.
+
+> **Ventaja de usar las variables de entorno:** <cite index="32-1">el dominio que GitHub usa para el reenvío de puertos puede cambiar con el tiempo</cite>, así que construir la URL a partir de `$GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN` devuelve siempre la correcta.
+
+Como `config.js` está ignorado por Git, **no hay riesgo de commitear por accidente una URL de Codespace**: cada entorno mantiene la suya.
 
 > <cite index="32-1">El dominio que GitHub usa para el reenvío de puertos puede cambiar con el tiempo, así que conviene no fijar estas URLs en el código de forma permanente</cite>. Son ajustes de sesión: revertirlos antes de commitear.
 
@@ -155,11 +199,12 @@ Fíjate en que ahora es `https`, no `http`. Un origen con protocolo distinto es 
 
 | | Local | Codespaces |
 |---|---|---|
-| `venv` y `.env` | Ya existen | Hay que recrearlos |
+| `venv`, `.env` y `config.js` | Ya existen | Hay que recrearlos |
 | Arranque de Flask | `--port 5001` | `--port 5001 --host 0.0.0.0` |
+| Servir el frontend | Live Server o `http.server` | `python -m http.server 5500` |
 | Visibilidad del puerto 5001 | N/A | Debe ser **pública** |
-| `data-api-url` en `index.html` | `http://localhost:5001/contact` | URL reenviada del puerto 5001 |
-| `ALLOWED_ORIGINS` | `http://127.0.0.1:5500` | URL reenviada del puerto 5500 (`https`) |
+| `API_URL` en `config.js` | `http://localhost:5001/contact` | URL reenviada del 5001 (`https`) |
+| `ALLOWED_ORIGINS` | `http://127.0.0.1:5500` | URL reenviada del 5500 (`https`) |
 
 ---
 
@@ -209,9 +254,9 @@ El backend es agnóstico del cliente. Para consumirlo desde otro proyecto:
 2. Enviar un `POST` a `/contact` con `Content-Type: application/json` y los campos de la tabla anterior.
 3. **Incluir el campo trampa antispam.** El formulario debe contener un input adicional oculto por CSS y vacío; el backend descarta silenciosamente cualquier petición que lo traiga relleno. El nombre exacto del campo está en `services/antispam.py` y debe coincidir **exactamente** con el atributo `name` del input: si no coinciden, la protección deja de funcionar sin dar ningún error.
 
-4. **Apuntar el frontend al backend.** La URL del endpoint se configura en el atributo `data-api-url` de la etiqueta `<body>` de `index.html`. `frontend/js/api.js` la lee de ahí, por lo que **no hay que modificar ningún fichero JavaScript** para cambiar de entorno.
+4. **Apuntar el frontend al backend.** Copiar `config.example.js` a `config.js` y ajustar `API_URL`. Como `config.js` está ignorado por Git, cada entorno mantiene su propia URL sin riesgo de pisarse ni de subirla al repositorio.
 
-`frontend/js/api.js` es reutilizable tal cual entre proyectos: no depende del resto de ficheros ni contiene configuración.
+`frontend/js/api.js` es reutilizable tal cual entre proyectos: no contiene configuración, solo la lógica de la petición.
 
 ---
 
