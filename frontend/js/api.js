@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:5001/contact';
+const API_URL = document.body.dataset.apiUrl;
 
 export async function sendContactForm(formData) {
     // devuelve { ok, status, errors }
