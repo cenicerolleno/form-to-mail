@@ -1,4 +1,5 @@
-const API_URL = document.body.dataset.apiUrl;
+import { API_URL } from './config.js';
+
 
 export async function sendContactForm(formData) {
     // devuelve { ok, status, errors }
