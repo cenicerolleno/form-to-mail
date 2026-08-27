@@ -1,10 +1,6 @@
 import time
-import pytest
 from services.antispam import is_bot, is_rate_limited, _attempts
 
-@pytest.fixture(autouse=True)
-def limpiar_intentos():
-    _attempts.clear()
     
 #--------------------------Tests for the is_bot function--------------------
 def test_honeypot_vacio_no_es_bot():
