@@ -153,6 +153,7 @@ def test_consentimiento_con_valor_numerico_da_error():
     errors = validate_contact_data(data)
     assert "consent" in errors
     
+#--------------------------Tests for complete and valid data--------------------
 
 def test_datos_completos_y_validos_no_dan_errores():
     data = {
