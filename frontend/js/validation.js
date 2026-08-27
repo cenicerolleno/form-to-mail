@@ -21,7 +21,10 @@ export function validateContactData(data) {
     // Validar teléfono
     if (phone.length > 20) {
         errors.phone = 'Máximo 20 caracteres';
+    } else if (phone && !/\d/.test(phone)) {
+    errors.phone = 'El teléfono debe contener solo dígitos.';
     }
+
     const message = (data.message || '').trim();
     // Validar mensaje
     if (!message) {

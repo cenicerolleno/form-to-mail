@@ -22,8 +22,11 @@ def validate_contact_data(data):
     if phone and phone.strip():
         if len(phone.strip()) > 20:
             errors['phone'] = 'Máximo 20 caracteres'
-        
+        elif not any(c.isdigit() for c in phone):
+            errors['phone'] = 'El teléfono debe contener al menos un dígito numérico.'
+    
     message = data.get('message')
+    
     if not message or not message.strip():
         errors['message'] = 'El mensaje es obligatorio.'
     elif len(message.strip()) > 500:

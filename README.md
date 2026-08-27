@@ -299,3 +299,15 @@ La colección de Bruno está versionada en el repositorio. Configurar la URL bas
 
 - `main` — estados estables y presentables
 - `develop` — integración del trabajo en curso
+
+### 🔵 Plan formativo (Módulo 3 · form-to-mail)
+
+Ciclo completo pendiente de cerrar por primera vez:
+tests → logging → config por entornos → Docker → despliegue → CI
+
+- [ ] `DEBUG = True` fijo en `config.py` → configuración por entorno
+- [ ] `CORS(app)` sin restringir orígenes
+- [ ] `print(result["error"])` en `routes.py` → `logging`
+- [ ] `_attempts` no es thread-safe (workers con hilos)
+- [ ] Contrato duplicado y divergente: `validation.js` ↔ `validation.py`
+- [ ] `getElementById(campo)` sin comprobar existencia en `ui.js`
