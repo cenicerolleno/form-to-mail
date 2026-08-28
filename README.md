@@ -246,6 +246,53 @@ Los errores de validación se devuelven agrupados, no de uno en uno:
 
 ---
 
+## Tests
+
+La suite cubre las tres capas del backend: lógica de negocio, adaptador de correo e integración del endpoint.
+
+### Instalación
+
+Las dependencias de desarrollo están separadas de las de producción. Desde `backend/`, con el entorno virtual activado:
+
+```bash
+pip install -r requirements-dev.txt
+```
+
+Ese fichero incluye `requirements.txt` mediante la directiva `-r`, así que instala todo lo necesario en un solo comando.
+
+> ⚠️ **`pip freeze > requirements.txt` no debe usarse** en este proyecto: volcaría las dependencias de desarrollo al manifiesto de producción. Ambos ficheros se editan a mano.
+
+### Ejecución
+
+```bash
+pytest                          # ejecución normal
+pytest --log-cli-level=INFO     # mostrando los logs en directo
+pytest -v                       # nombre de cada test, uno por línea
+pytest tests/test_routes.py     # un solo fichero
+```
+
+Todos los comandos se lanzan desde `backend/`.
+
+**Sobre `--log-cli-level`:** por defecto pytest captura los logs y solo los muestra cuando un test falla. Esa opción los saca en directo, lo que resulta útil al depurar un test concreto y molesto como comportamiento por defecto.
+
+### Estructura
+
+```
+backend/
+├── conftest.py             # fixtures compartidas por todos los ficheros de test
+└── tests/
+    ├── test_validation.py  # los cinco campos, límites y contrato completo
+    ├── test_antispam.py    # honeypot, rate limiting y expiración de ventana
+    ├── test_mailer.py      # caminos de salida y payload (API externa mockeada)
+    └── test_routes.py      # integración: la cascada de barreras traducida a códigos HTTP
+```
+
+**Los tests no salen a internet.** Las llamadas a la API de correo están mockeadas, así que la suite se ejecuta sin conexión, sin consumir cuota del proveedor y en menos de un segundo.
+
+**`conftest.py`** aloja una fixture de limpieza que se aplica automáticamente a todos los tests. Es necesaria porque el rate limiter mantiene estado a nivel de módulo: sin ella, los tests se contaminarían entre sí y fallarían de forma dependiente del orden.
+
+---
+
 ## Integración con otro frontend
 
 El backend es agnóstico del cliente. Para consumirlo desde otro proyecto:
