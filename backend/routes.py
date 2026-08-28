@@ -3,7 +3,9 @@ from services.validation import validate_contact_data
 from services.antispam import is_bot, is_rate_limited
 from services.mailer import send_email
 from config import Config
+import logging
 
+logger = logging.getLogger(__name__)
 contact_bp = Blueprint('contact', __name__)
 
 
@@ -11,6 +13,7 @@ contact_bp = Blueprint('contact', __name__)
 def contact():
     ip = request.remote_addr
     if is_rate_limited(ip):
+        logger.warning("Rate limit triggered. IP: %s", ip)
         return jsonify({"error": "Too many requests"}), 429
     data = request.get_json(silent=True)
     if data is None:
@@ -23,7 +26,7 @@ def contact():
     
     result = send_email(data, Config)
     if not result["success"]:
-        print(result["error"])
+        logger.error("Fallo al enviar email: %s", result["error"])
         return (jsonify({"message": "The message could not be sent, please try again in a few minutes!"}), 502)
     
     
