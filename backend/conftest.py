@@ -1,3 +1,5 @@
+import os
+os.environ["FLASK_ENV"] = "testing"   
 import pytest
 from services.antispam import _attempts
 

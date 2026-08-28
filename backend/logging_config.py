@@ -15,22 +15,22 @@ class JsonFormatter(logging.Formatter):
         return json.dumps(log_data, ensure_ascii=False)
 
 def setup_logging(app):
-    #Opcion usando la class JsonFormatter configurada mas arriba
     
+    level = app.config["LOG_LEVEL"]
+    log_format = app.config["LOG_FORMAT"]
+    
+    if log_format == "json":
+        formatter = JsonFormatter()
+    else:
+        formatter = logging.Formatter(
+            "%(asctime)s - %(levelname)s - %(name)s - %(message)s"
+        )
     handler = logging.StreamHandler()       # a dónde: salida estándar
-    handler.setFormatter(JsonFormatter())   # con qué aspecto
+    handler.setFormatter(formatter)         # con qué aspecto
     
     root = logging.getLogger()              # el logger raíz
     root.handlers.clear()                   # unifica los logs de Flask y server
     root.addHandler(handler)                # añade el handler
-    root.setLevel(logging.INFO)             # criba el umbral desde el que se reciben los logs
+    root.setLevel(level)                    # criba el umbral desde el que se reciben los logs
     
-    #Opcion de texto plano sin formater. 
-    # Se guarda para revisión didáctica
-    '''
-    logging.basicConfig(
-        level=logging.INFO, #Se sube a WARNING en produccion (level=logging.WARNING)
-        format= '%(asctime)s - %(levelname)s - %(name)s - %(message)s',
-    )
-    '''
     
