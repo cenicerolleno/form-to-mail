@@ -66,6 +66,7 @@ pip install -r requirements.txt
 Crear un fichero `.env` dentro de `backend/` (no se versiona):
 
 ```
+FLASK_ENV=development
 BREVO_API_KEY=tu_clave_de_api
 MAIL_FROM=remitente@verificado.com
 MAIL_TO=destinatario@ejemplo.com
@@ -74,12 +75,31 @@ ALLOWED_ORIGINS=http://127.0.0.1:5500,http://localhost:5500
 
 | Variable | Descripción |
 |---|---|
+| `FLASK_ENV` | Entorno de ejecución: `development`, `production` o `testing`. **Por defecto `development`** si no se define |
 | `BREVO_API_KEY` | Clave de API de Brevo (*SMTP & API → API Keys*) |
 | `MAIL_FROM` | Remitente verificado en Brevo. **No** es el email del visitante |
 | `MAIL_TO` | Buzón que recibirá los mensajes del formulario |
 | `ALLOWED_ORIGINS` | Orígenes autorizados, separados por comas y **sin espacios** |
 
 > **Sobre `ALLOWED_ORIGINS`:** el origen debe coincidir exactamente, protocolo y puerto incluidos. `http://localhost:5500` y `http://127.0.0.1:5500` son orígenes distintos para el navegador.
+
+### Configuración por entornos
+
+`config.py` define una clase base con los valores **seguros por defecto** y tres variantes que la heredan. `create_app()` selecciona una según `FLASK_ENV`.
+
+| Entorno | `DEBUG` | Nivel de log | Formato de log |
+|---|---|---|---|
+| `development` | `True` | `INFO` | texto |
+| `production` | `False` | `WARNING` | JSON |
+| `testing` | `False` | `DEBUG` | JSON |
+
+**Los valores seguros viven en la clase base y desarrollo los relaja.** Al revés —permisivo por defecto y restrictivo en producción— olvidar configurar el entorno dejaría el depurador expuesto en el servidor.
+
+> ⚠️ **`DEBUG = True` nunca debe llegar a producción.** El depurador de Werkzeug expone una consola interactiva de Python ante cualquier error no capturado: quien provoque una excepción podría ejecutar código en el servidor.
+
+**El entorno `testing`** usa credenciales falsas escritas en el propio `config.py`, de modo que la suite de tests no depende de que exista un `.env`. Se activa automáticamente al ejecutar `pytest` — no hay que definir nada a mano.
+
+**El formato de log cambia con el entorno:** texto legible en desarrollo, JSON estructurado en producción, donde lo consumen las plataformas de despliegue y los agregadores de logs.
 
 ### Configuración del frontend
 
