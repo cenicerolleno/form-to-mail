@@ -518,3 +518,9 @@ tests → logging → config por entornos → **Docker** → **despliegue** → 
 - [ ] Docker
 - [ ] Despliegue
 - [ ] CI
+
+---
+
+## Licencia
+
+MIT — ver [`LICENSE`](LICENSE).

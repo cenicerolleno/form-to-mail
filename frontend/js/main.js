@@ -1,3 +1,5 @@
+// Copyright (c) 2026 Mauro Nolan Fernández. Todos los derechos reservados.
+
 import { sendContactForm } from "./api.js";
 import { validateContactData } from "./validation.js";
 import { showErrors, clearErrors, showMessage, clearMessage, updateCounter } from "./ui.js";
