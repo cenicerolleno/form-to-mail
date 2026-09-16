@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Mauro Nolan Fernández. Todos los derechos reservados.
 import os
 from flask import Flask
 from flask_cors import CORS

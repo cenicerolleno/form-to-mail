@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Mauro Nolan Fernández. Todos los derechos reservados.
 import pytest
 from app import create_app
 

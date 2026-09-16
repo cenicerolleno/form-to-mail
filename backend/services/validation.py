@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Mauro Nolan Fernández. Todos los derechos reservados.
 from email_validator import validate_email, EmailNotValidError
 
 BREAK_CHARS = ('\n', '\r', '\t')

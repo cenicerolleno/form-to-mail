@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Mauro Nolan Fernández. Todos los derechos reservados.
 from services.validation import validate_contact_data, clean_contact_data, validate_text_field
 
 # ----------Tests for the name field--------------------

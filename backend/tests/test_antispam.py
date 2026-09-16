@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Mauro Nolan Fernández. Todos los derechos reservados.
 import time
 from services.antispam import is_bot, is_rate_limited, _attempts, get_client_ip, _purge_expired, HONEYPOT_FIELD
 

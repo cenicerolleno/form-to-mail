@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Mauro Nolan Fernández. Todos los derechos reservados.
 from unittest.mock import MagicMock
 from services.mailer import send_email
 import requests
