@@ -1,3 +1,8 @@
 .hp-field {
-  display: none;
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
 }
