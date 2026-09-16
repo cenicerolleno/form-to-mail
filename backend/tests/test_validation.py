@@ -1,5 +1,4 @@
-from services.validation import validate_contact_data
-
+from services.validation import validate_contact_data, clean_contact_data, validate_text_field
 
 # ----------Tests for the name field--------------------
 def test_nombre_valido_no_da_error():
@@ -17,10 +16,9 @@ def test_nombre_ausente_da_error():
     errors = validate_contact_data(data)        
     assert "name" in errors                     
     
-def test_nombre_con_solo_espacios_da_error():
-    data = {"name": "   "}                      
-    errors = validate_contact_data(data)        
-    assert "name" in errors
+def test_nombre_de_solo_espacios_da_error_tras_limpieza():
+    limpio = clean_contact_data({"name": "   "})
+    assert "name" in validate_contact_data(limpio)
     
 def test_nombre_con_exactamente_60_caracteres_no_da_error():
     data = {"name": "a" * 60}                   
@@ -112,11 +110,10 @@ def test_mensaje_ausente_da_error():
     errors = validate_contact_data(data)
     assert "message" in errors
     
-def test_mensaje_con_solo_espacios_da_error():
-    data = {"message": "   "}
-    errors = validate_contact_data(data)
-    assert "message" in errors
-    
+def test_mensaje_de_solo_espacios_da_error_tras_limpieza():
+    limpio = clean_contact_data({"message": "   "})
+    assert "message" in validate_contact_data(limpio)
+        
 def test_mensaje_con_exactamente_500_caracteres_no_da_error():
     data = {"message": "a" * 500}
     errors = validate_contact_data(data)
@@ -164,3 +161,27 @@ def test_datos_completos_y_validos_no_dan_errores():
         "consent": True
     }
     assert validate_contact_data(data) == {}
+
+# -------------------- validate_text_field --------------------
+def test_campo_obligatorio_vacio_da_error():
+    assert validate_text_field("", 60) is not None
+
+def test_campo_opcional_vacio_no_da_error():
+    assert validate_text_field("", 60, required=False) is None
+
+def test_salto_de_linea_da_error_por_defecto():
+    assert validate_text_field("Mauro\nFalso", 60) is not None
+
+def test_retorno_de_carro_da_error():
+    assert validate_text_field("Mauro\rFalso", 60) is not None
+
+def test_salto_de_linea_permitido_no_da_error():
+    assert validate_text_field("Linea 1\nLinea 2", 60, allow_breaks=True) is None
+
+
+# -------------------- clean_contact_data --------------------
+def test_limpieza_quita_espacios():
+    assert clean_contact_data({"name": "  Mauro  "})["name"] == "Mauro"
+
+def test_limpieza_respeta_booleanos():
+    assert clean_contact_data({"consent": True})["consent"] is True
